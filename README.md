@@ -85,13 +85,10 @@ Usage: quart.rb
 Examples
 --------
 
+Output the hosts affected by the Vulerability "Degree of Randomness of TCP Initial Sequence Numbers"
+
 ```
 $ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --tag="Hosts" --exploit="Degree of Randomness of TCP Initial Sequence Numbers" --mask
-Searching for tag:  Hosts
-Masking customer data
-Searching for Vulnerability: Degree of Randomness of TCP Initial Sequence Numbers
-Setting output type to: txt
-Setting input file to:  /Users/spindler/Documents/Results.pdf
 Vulnerability: Degree of Randomness of TCP Initial Sequence Numbers
 Hosts:
 host0
@@ -99,6 +96,8 @@ host1
 host2
 ...
 ```
+
+Output a list of all the names of Vulnerabilities:
 
 ```
 $ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --exploits
@@ -110,4 +109,14 @@ How to Control the Ciphers for SSL and TLS on IIS
 Null Session/Password NetBIOS Access
 NTP "monlist"  Feature Denial of Service Vulnerability
 ...
+```
+
+Output the Port information, QID and CVE ID for the Vulnerability "HTTP Methods Returned by OPTIONS Request"
+
+```
+$ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --exploit="HTTP Methods Returned by OPTIONS Request" --tag="QID|CVE ID|Port"
+Vulnerability: HTTP Methods Returned by OPTIONS Request
+QID: 45056
+CVE ID: 
+Port: 8443/tcp
 ```
