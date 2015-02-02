@@ -1,0 +1,45 @@
+# Changes
+# 0.0.1: Thu 29 Jan 2015 09:47:00 AEDT
+# Initial version
+# 0.0.2: Thu 29 Jan 2015 17:48:05 AEDT
+# Added hashed based processing
+# 0.0.3: Fri 30 Jan 2015 09:47:04 AEDT
+# Added search for host capability
+# 0.0.4: Fri 30 Jan 2015 09:49:30 AEDT
+# Added dump function to export PDF to text
+# 0.0.5: Fri 30 Jan 2015 12:45:54 AEDT
+# Added initial code to allow instances
+# 0.0.6: Sat 31 Jan 2015 23:36:42 AEDT
+# Fixed text processing
+# 0.0.7: Sun  1 Feb 2015 05:30:05 AEDT
+# Added tag based search
+# 0.0.8: Sun  1 Feb 2015 05:58:40 AEDT
+# Added basic file output capability
+# 0.0.9: Sun  1 Feb 2015 09:47:57 AEDT
+# Added CSV output
+# 0.1.0: Sun  1 Feb 2015 10:04:40 AEDT
+# Cleaned up information output
+# 0.1.1: Sun  1 Feb 2015 10:35:45 AEDT
+# Added usage information
+# 0.1.2: Sun  1 Feb 2015 12:24:45 AEDT
+# Added initial XLS output
+# 0.1.3: Sun  1 Feb 2015 12:44:45 AEDT
+# Fixed record search
+# 0.1.4: Sun  1 Feb 2015 16:23:26 AEDT
+# Added generic search
+# 0.1.5: Mon  2 Feb 2015 13:55:33 AEDT
+# Fixed vulnerability report
+# 0.1.6: Mon  2 Feb 2015 15:45:23 AEDT
+# Fixed reporting format
+# 0.1.7: Mon  2 Feb 2015 18:28:37 AEDT
+# Fixed searching and added QID and CVE ID search
+# 0.1.8: Mon  2 Feb 2015 19:29:01 AEDT
+# Added searching for Bugtraq ID, PCI Vulnerabilities, Status, OS and Asset Group
+# 0.1.9: Tue  3 Feb 2015 08:24:09 AEDT
+# Cleaned up XLS output
+# 0.2.0: Tue  3 Feb 2015 08:32:56 AEDT
+# Cleaned up text output
+# 0.2.1: Tue  3 Feb 2015 08:43:33 AEDT
+# Fixed help output
+# 0.2.2: Tue  3 Feb 2015 09:50:01 AEDT
+# Output a list of Vulnerability names
