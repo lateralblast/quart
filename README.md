@@ -62,9 +62,11 @@ Usage: quart.rb
 
 "--help",       "-h"  Display usage information
 "--version",    "-V"  Display version information
+"--verbose",    "-v"  Display debug messages
 "--dump",       "-d"  Dump data from PDF to text
 "--mask",       "-m"  Mask customer data
 "--exploits",   "-X"  List of vulnerable servers listed by vulnerability
+"--tags",       "-T"  List of tags (columns in CVS/XLS)
 "--exploit",    "-x"  List of vulnerable servers listed by vulnerability
 "--input",      "-i"  Input file
 "--output",     "-o"  Output file
@@ -119,4 +121,53 @@ Vulnerability: HTTP Methods Returned by OPTIONS Request
 QID: 45056
 CVE ID: 
 Port: 8443/tcp
+```
+
+Output a list of tags (Columns in CVS/XLS):
+
+```
+$ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --tags
+Vulnerability
+Hosts
+Port
+CVSS
+QID
+CVSS Base
+Category
+CVSS Temporal
+CVE ID
+Vendor Reference
+Bugtraq ID
+Service Modified
+User Modified
+Edited
+PCI Vuln
+Ticket State
+THREAT
+IMPACT
+SOLUTION
+Workaround
+Patch
+COMPLIANCE
+EXPLOITABILITY
+ASSOCIATED MALWARE
+Times Detected
+Asset Group
+Target Distribution
+Confidentiality Requirement
+Integrity Requirement
+Availability Requirement
+RESULTS
+Affected Software
+Virtual Patches
+NOTE
+Affected Versions
+Mitigating factors
+investigated
+Login Name
+Excluded QIDs
+Status
+Vulnerabilities
+Potential Vulnerabilities
+Information Gathered
 ```

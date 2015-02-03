@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Name:         quart (QUalysguard Analysis Report Tool)
-# Version:      0.2.3
+# Version:      0.2.4
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -231,11 +231,18 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
   return vuln_array,headers
 end
 
-def print_results(vuln_array,headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits)
+def print_results(vuln_array,headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags)
   if list_exploits == 1
     vuln_array.each do |vuln_name, vuln_info|
       puts vuln_name
     end
+  end
+  if list_tags == 1
+    headers.each do |header|
+      puts header
+    end
+  end
+  if list_exploits == 1 or list_tags == 1
     return
   end
   if output_file.match(/[A-z]|[0-9]/)
@@ -379,6 +386,7 @@ begin
     [ "--dump",       "-d", Getopt::BOOLEAN ],  # Dump data from PDF to text
     [ "--mask",       "-m", Getopt::BOOLEAN ],  # Mask customer data
     [ "--exploits",   "-X", Getopt::BOOLEAN ],  # List of vulnerabilities
+    [ "--tags",       "-T", Getopt::BOOLEAN ],  # List of tags (columns in CVS/XLS)
     [ "--exploit",    "-x", Getopt::REQUIRED ], # List of vulnerable servers listed by vulnerability
     [ "--input",      "-i", Getopt::REQUIRED ], # Input file
     [ "--output",     "-o", Getopt::REQUIRED ], # Output file
@@ -499,6 +507,14 @@ if option["exploits"]
   list_exploits = 1
 else
   list_exploits = 0
+end
+
+# Output a list of tags
+
+if option["tags"]
+  list_tags = 1
+else
+  list_tags = 0
 end
 
 # Search for a specific vulnerability
@@ -640,7 +656,7 @@ if option["input"]
   headers    = []
   (vuln_array,headers) = process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
   if dump_data == 0
-    print_results(vuln_array,headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits)
+    print_results(vuln_array,headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags)
   end
 end
 
