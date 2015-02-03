@@ -171,3 +171,22 @@ Vulnerabilities
 Potential Vulnerabilities
 Information Gathered
 ```
+
+Dump everything as text:
+
+```
+$ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --dump
+```
+
+Output everything to XLS:
+
+```
+$ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --format=xls --output=report.xls
+```
+
+Output only Hostnames, CVE IDs and QIDs to XLS:
+
+```
+$ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --format=xls --output=report.xls --tag="Hosts|CVE ID|QID"
+```
+
