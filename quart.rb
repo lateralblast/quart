@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Name:         quart (QUalysguard Analysis Report Tool)
-# Version:      0.2.2
+# Version:      0.2.3
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -375,6 +375,7 @@ begin
   option = Getopt::Long.getopts(
     [ "--help",       "-h", Getopt::BOOLEAN ],  # Display usage information
     [ "--version",    "-V", Getopt::BOOLEAN ],  # Display version information
+    [ "--verbose",    "-v", Getopt::BOOLEAN ],  # Display debug messages
     [ "--dump",       "-d", Getopt::BOOLEAN ],  # Dump data from PDF to text
     [ "--mask",       "-m", Getopt::BOOLEAN ],  # Mask customer data
     [ "--exploits",   "-X", Getopt::BOOLEAN ],  # List of vulnerabilities
@@ -399,14 +400,26 @@ rescue
   exit
 end
 
+# Print help information
+
 if option["help"]
   print_usage()
   exit
 end
 
+# Print version information
+
 if option["version"]
   print_version()
   exit
+end
+
+# Display debug messages
+
+if option["verbose"]
+  verbose_mode = 1
+else
+  verbose_mode = 0
 end
 
 # Specifiy a specific host to search for
@@ -420,7 +433,9 @@ if option["host"]
       exit
     end
   end
-  puts "Searching for host:\t"+search_host
+  if verbose_mode == 1
+    puts "Searching for host:\t"+search_host
+  end
 else
   search_host = ""
 end
@@ -447,7 +462,9 @@ end
 if option["tag"]
   search_tag = option["tag"]
   search_tag = search_tag.gsub(/CVEID/,"CVE ID")
-  puts "Searching for tag:\t"+search_tag
+  if verbose_mode == 1
+    puts "Searching for tag:\t"+search_tag
+  end
 else
   search_tag = ""
 end
@@ -456,7 +473,9 @@ end
 
 
 if option["mask"]
-  puts "Masking customer data"
+  if verbose_mode == 1
+    puts "Masking customer data"
+  end
   mask_data = 1
 else
   mask_data = 0
@@ -486,7 +505,9 @@ end
 
 if option["exploit"]
   search_exploit = option["exploit"]
-  puts "Searching for Vulnerability: "+search_exploit
+  if verbose_mode == 1
+    puts "Searching for Vulnerability: "+search_exploit
+  end
 else
   search_exploit = ""
 end
@@ -495,6 +516,9 @@ end
 
 if option["pci"]
   search_pci = option["pci"]
+  if verbose_mode == 1
+    puts "Searching for PCI: "+search_pci
+  end
 else
   search_pci = ""
 end
@@ -504,6 +528,9 @@ end
 
 if option["qid"]
   search_qid = option["qid"]
+  if verbose_mode == 1
+    puts "Searching for QID: "+search_qid
+  end
 else
   search_qid = ""
 end
@@ -512,6 +539,9 @@ end
 
 if option["cveid"]
   search_cveid = option["cveid"]
+  if verbose_mode == 1
+    puts "Searching for CVE ID: "+search_cveid
+  end
 else
   search_cveid = ""
 end
@@ -520,6 +550,9 @@ end
 
 if option["bugtraqid"]
   search_bugtraqid = option["bugtraqid"]
+  if verbose_mode == 1
+    puts "Searching for Bugtraq ID: "+search_bugtraqid
+  end
 else
   search_bugtraqid = ""
 end
@@ -528,6 +561,9 @@ end
 
 if option["os"]
   search_os = option["os"]
+  if verbose_mode == 1
+    puts "Searching for OS: "+search_os
+  end
 else
   search_os = ""
 end
@@ -536,6 +572,9 @@ end
 
 if option["cvvs"]
   search_cvvs = option["cvvs"]
+  if verbose_mode == 1
+    puts "Searching for CVVS: "+search_cvvs
+  end
 else
   search_cvvs = ""
 end
@@ -544,6 +583,9 @@ end
 
 if option["status"]
   search_status = option["status"]
+  if verbose_mode == 1
+    puts "Searching for Status: "+search_status
+  end
 else
   search_status = ""
 end
@@ -552,7 +594,9 @@ end
 
 if option["dump"]
   dump_data = 1
-  puts "Setting output type to:\traw"
+  if verbose_mode == 1
+    puts "Setting output type to:\traw"
+  end
 else
   dump_data = 0
   if option["format"]
@@ -569,14 +613,18 @@ else
   else
     output_format = "txt"
   end
-  puts "Setting output type to:\t"+output_format
+  if verbose_mode == 1
+    puts "Setting output type to:\t"+output_format
+  end
 end
 
 if output_file.match(/[A-z]|[0-9]/)
   if !output_file.match(/\.#{output_format}/)
     output_file = output_file+"."+output_format
   end
-  puts "Setting output file to:\t"+output_file
+  if verbose_mode == 1
+    puts "Setting output file to:\t"+output_file
+  end
 end
 
 if option["input"]
@@ -585,7 +633,9 @@ if option["input"]
     puts "File: "+input_file+" does not exist"
     exit
   end
-  puts "Setting input file to:\t"+input_file
+  if verbose_mode == 1
+    puts "Setting input file to:\t"+input_file
+  end
   vuln_array = Hash.new{|hash, key| hash[key] = Hash.new}
   headers    = []
   (vuln_array,headers) = process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)

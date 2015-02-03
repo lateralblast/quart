@@ -43,3 +43,5 @@
 # Fixed help output
 # 0.2.2: Tue  3 Feb 2015 09:50:01 AEDT
 # Output a list of Vulnerability names
+# 0.2.3: Tue  3 Feb 2015 10:58:49 AEDT
+# Added verbose switch
