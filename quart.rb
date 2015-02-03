@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Name:         quart (QUalysguard Analysis Report Tool)
-# Version:      0.2.4
+# Version:      0.2.5
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -83,7 +83,7 @@ end
 
 # Process PDF file
 
-def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
+def process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
   receiver   = TextReceiver.new
   reader     = PDF::Reader.new(input_file)
   host_name  = ""
@@ -94,10 +94,13 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
   info_name  = ""
   info_data  = []
   vuln_name  = ""
-  headers.push("Vulnerability")
-  headers.push("Hosts")
-  headers.push("Port")
-  headers.push("CVSS")
+  vuln_headers.push("Vulnerability")
+  vuln_headers.push("Hosts")
+  vuln_headers.push("Port")
+  vuln_headers.push("CVSS")
+  summary_title = []
+  summary_name  = ""
+  summary_data  = []
   if output_file.match(/[A-z]|[0-9]/) and dump_data == 1
     file = File.open(output_file,"w")
   end
@@ -152,6 +155,12 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
                 else
                   info_data.push(line)
                 end
+              else
+                if summary_mode == 1
+                  if summary_title.match(/[A-z]/)
+                    summary_data.push(line)
+                  end
+                end
               end
             end
           end
@@ -177,7 +186,7 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
             info_name = line.split(/:/)[0]
             info_line = line.split(/:/)[1..-1].join(":")
             vuln_array[vuln_name][info_name] = info_line
-            headers.push(info_name)
+            vuln_headers.push(info_name)
           end
         when /[A-z]:$/
           if vuln_name.match(/[A-z]/)
@@ -186,7 +195,7 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
                 vuln_array[vuln_name][info_name] = info_data.join("\n")
                 info_data = []
                 info_name = line.split(/:/)[0]
-                headers.push(info_name)
+                vuln_headers.push(info_name)
               else
                 if mask_data == 1
                   case line
@@ -198,6 +207,19 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
                 else
                   info_data.push(line)
                 end
+              end
+            end
+          else
+            if summary_mode == 1
+              if !line.match(/GMT/)
+                if summary_title.match(/[A-z]/)
+                  summary_array[summary_title][summary_name] = summary_data.join("\n")
+                  summary_data = []
+                  summary_name = line.split(/:/)[0]
+                  summary_headers.push(summary_name)
+                end
+              else
+                summary_data.push(line)
               end
             end
           end
@@ -217,6 +239,19 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
             else
               info_data.push(line)
             end
+          else
+            if summary_mode == 1
+              if !summary_name.match(/[A-z]/)
+                if lines[index-1].match(/Linux Vuln Scan Results/)
+                  summary_name = "Date"
+                end
+              end
+              if line.match(/Report Summary|by Severity|5 Biggest Categories/)
+                summary_title = line.gsub(/by |5 /,"")
+              else
+                summary_data.push(line)
+              end
+            end
           end
         end
       end
@@ -224,22 +259,37 @@ def process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
   end
   vuln_array[vuln_name]["Hosts"]   = host_list.join("\n")
   vuln_array[vuln_name][info_name] = info_data.join("\n")
-  headers = headers.uniq
+  vuln_headers    = vuln_headers.uniq
+  summary_headers = summary_headers.uniq
   if output_file.match(/[A-z]|[0-9]/) and dump_data == 1
     file.close
   end
-  return vuln_array,headers
+  return vuln_array,vuln_headers,summary_headers
 end
 
-def print_results(vuln_array,headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags)
+def print_results(vuln_array,summary_array,vuln_headers,summary_headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags,summary_mode)
+  if summary_mode == 1
+    summary_array.each do |summary_title, summary_info|
+      puts summary_title+":"
+      summary_info.each do |summary_name, value|
+        if value.match("\n")
+          puts summary_name+":"
+          puts value
+        else
+          puts summary_name+": "+value
+        end
+      end
+    end
+    return
+  end
   if list_exploits == 1
     vuln_array.each do |vuln_name, vuln_info|
       puts vuln_name
     end
   end
   if list_tags == 1
-    headers.each do |header|
-      puts header
+    vuln_headers.each do |vuln_header|
+      puts vuln_header
     end
   end
   if list_exploits == 1 or list_tags == 1
@@ -249,7 +299,7 @@ def print_results(vuln_array,headers,search_host,search_exploit,search_tag,searc
     file = File.open(output_file,"w")
   end
   if output_format == "csv"
-    output_string = headers.join(",")
+    output_string = vuln_headers.join(",")
     if output_file.match(/[A-z]|[0-9]/)
       file.write(output_string+"\n")
     else
@@ -260,14 +310,14 @@ def print_results(vuln_array,headers,search_host,search_exploit,search_tag,searc
     row = 0
     worksheet  = workbook.add_worksheet('Vulnerability Results')
     format     = workbook.add_format()
-    no_headers = headers.length
+    no_headers = vuln_headers.length
     format.set_bold(1)
     worksheet.set_column(0,no_headers,20)
-    headers.each_with_index do |header, column|   
-      if search_tag.match(/[A-z]/) and !header.match(/#{search_tag}/)
+    vuln_headers.each_with_index do |vuln_header, column|   
+      if search_tag.match(/[A-z]/) and !vuln_header.match(/#{search_tag}/)
         worksheet.set_column(column,column,0)
       end
-      worksheet.write(row,column,header)
+      worksheet.write(row,column,vuln_header)
     end
     format.set_bold(0)
     row = row+1
@@ -291,10 +341,10 @@ def print_results(vuln_array,headers,search_host,search_exploit,search_tag,searc
         end
         case output_format
         when "csv"
-          headers.each do |header|
-            if !search_tag.match(/[A-z]/) or header.match(/#{search_tag}/)
-              if vuln_array[vuln_name][header]
-                value = vuln_array[vuln_name][header]
+          vuln_headers.each do |vuln_header|
+            if !search_tag.match(/[A-z]/) or vuln_header.match(/#{search_tag}/)
+              if vuln_array[vuln_name][vuln_header]
+                value = vuln_array[vuln_name][vuln_header]
               else
                 value = ""
               end
@@ -313,10 +363,10 @@ def print_results(vuln_array,headers,search_host,search_exploit,search_tag,searc
             print "\n"
           end
         when "xls"
-          headers.each_with_index do |header, column|
-            if !search_tag.match(/[A-z]/) or header.match(/#{search_tag}/)
-              if vuln_array[vuln_name][header]
-                value = vuln_array[vuln_name][header]
+          vuln_headers.each_with_index do |vuln_header, column|
+            if !search_tag.match(/[A-z]/) or vuln_header.match(/#{search_tag}/)
+              if vuln_array[vuln_name][vuln_header]
+                value = vuln_array[vuln_name][vuln_header]
                 value = value.gsub(/\n/,"\r")
               else
                 value = ""
@@ -385,6 +435,7 @@ begin
     [ "--verbose",    "-v", Getopt::BOOLEAN ],  # Display debug messages
     [ "--dump",       "-d", Getopt::BOOLEAN ],  # Dump data from PDF to text
     [ "--mask",       "-m", Getopt::BOOLEAN ],  # Mask customer data
+    [ "--summary",    "-S", Getopt::BOOLEAN ],  # Output summary only
     [ "--exploits",   "-X", Getopt::BOOLEAN ],  # List of vulnerabilities
     [ "--tags",       "-T", Getopt::BOOLEAN ],  # List of tags (columns in CVS/XLS)
     [ "--exploit",    "-x", Getopt::REQUIRED ], # List of vulnerable servers listed by vulnerability
@@ -428,6 +479,14 @@ if option["verbose"]
   verbose_mode = 1
 else
   verbose_mode = 0
+end
+
+# Output summary only
+
+if option["summary"]
+  summary_mode = 1
+else
+  summary_mode = 0
 end
 
 # Specifiy a specific host to search for
@@ -478,7 +537,6 @@ else
 end
 
 # Mask customer data like hostnames, MAC addresses, etc
-
 
 if option["mask"]
   if verbose_mode == 1
@@ -652,11 +710,13 @@ if option["input"]
   if verbose_mode == 1
     puts "Setting input file to:\t"+input_file
   end
-  vuln_array = Hash.new{|hash, key| hash[key] = Hash.new}
-  headers    = []
-  (vuln_array,headers) = process_pdf(input_file,output_file,vuln_array,headers,dump_data,mask_data)
+  vuln_array      = Hash.new{|hash, key| hash[key] = Hash.new}
+  summary_array   = Hash.new{|hash, key| hash[key] = Hash.new}
+  vuln_headers    = []
+  summary_headers = []
+  (vuln_array,vuln_headers,summary_headers) = process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
   if dump_data == 0
-    print_results(vuln_array,headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags)
+    print_results(vuln_array,summary_array,vuln_headers,summary_headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags,summary_mode)
   end
 end
 

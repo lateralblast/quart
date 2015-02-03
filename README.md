@@ -65,6 +65,7 @@ Usage: quart.rb
 "--verbose",    "-v"  Display debug messages
 "--dump",       "-d"  Dump data from PDF to text
 "--mask",       "-m"  Mask customer data
+"--summary",    "-S"  Output summary only
 "--exploits",   "-X"  List of vulnerable servers listed by vulnerability
 "--tags",       "-T"  List of tags (columns in CVS/XLS)
 "--exploit",    "-x"  List of vulnerable servers listed by vulnerability
@@ -172,10 +173,16 @@ Potential Vulnerabilities
 Information Gathered
 ```
 
-Dump everything as text:
+Dump everything as text (converts PDF to text):
 
 ```
 $ ./quart.rb --input=/Users/spindler/Documents/Results.pdf --dump
+```
+
+Output everying in Text (default):
+
+```
+$ ./quart.rb --input=/Users/spindler/Documents/Results.pdf
 ```
 
 Output everything to XLS:

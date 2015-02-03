@@ -47,3 +47,5 @@
 # Added verbose switch
 # 0.2.4: Tue  3 Feb 2015 11:09:12 AEDT
 # Added option to list tags
+# 0.2.5: Tue  3 Feb 2015 19:31:34 AEDT
+# Added initial Summary processing
