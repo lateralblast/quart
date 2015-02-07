@@ -83,10 +83,11 @@ Usage: quart.rb
 "--help",       "-h"  Display usage information
 "--version",    "-V"  Display version information
 "--verbose",    "-v"  Display debug messages
+"--pdftotext",  "-P"  Use pdftotext even if pdf-reader gem is installed
 "--dump",       "-d"  Dump data from PDF to text
 "--mask",       "-m"  Mask customer data
 "--summary",    "-S"  Output summary only
-"--exploits",   "-X"  List of vulnerable servers listed by vulnerability
+"--exploits",   "-X"  List of vulnerabilities
 "--tags",       "-T"  List of tags (columns in CVS/XLS)
 "--exploit",    "-x"  List of vulnerable servers listed by vulnerability
 "--input",      "-i"  Input file

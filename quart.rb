@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Name:         quart (QUalysguard Analysis Report Tool)
-# Version:      0.2.6
+# Version:      0.2.8
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -21,17 +21,6 @@ require 'writeexcel'
 $pdfgem = 1
 $script = $0
 $text   = []
-
-begin
-  require 'pdf-reader'
-rescue LoadError
-  $pdfgem    = 0
-  $pdftotext = %x[which pdftotext].chomp
-  if !$pdftotext.match(/pdftotext/)
-    puts "Could not find PDF gem or pdftotext"
-    exit
-  end
-end
 
 # Print script usage information
 
@@ -670,6 +659,7 @@ begin
     [ "--help",       "-h", Getopt::BOOLEAN ],  # Display usage information
     [ "--version",    "-V", Getopt::BOOLEAN ],  # Display version information
     [ "--verbose",    "-v", Getopt::BOOLEAN ],  # Display debug messages
+    [ "--pdftotext",  "-P", Getopt::BOOLEAN ],  # Use pdftotext even if pdf-reader gem is installed
     [ "--dump",       "-d", Getopt::BOOLEAN ],  # Dump data from PDF to text
     [ "--mask",       "-m", Getopt::BOOLEAN ],  # Mask customer data
     [ "--summary",    "-S", Getopt::BOOLEAN ],  # Output summary only
@@ -694,6 +684,24 @@ begin
 rescue
   print_usage()
   exit
+end
+
+if !option["pdftotext"]
+  begin
+    require 'pdf-reader'
+  rescue LoadError
+    $pdfgem = 0
+  end
+else
+  $pdfgem = 0
+end
+
+if $pdfgem == 0
+  $pdftotext = %x[which pdftotext].chomp
+  if !$pdftotext.match(/pdftotext/)
+    puts "Could not find PDF gem or pdftotext"
+    exit
+  end
 end
 
 # Print help information

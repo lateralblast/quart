@@ -53,3 +53,5 @@
 # Added support for using pdftotext if pdf-reader gem is not installed
 # 0.2.7: Sat  7 Feb 2015 18:45:02 AEDT
 # Improved header detection
+# 0.2.8: Sat  7 Feb 2015 18:54:35 AEDT
+# Added --pdftotext switch to use pdftotext even if pdf-reader gem is installed
