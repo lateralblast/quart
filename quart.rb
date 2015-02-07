@@ -225,7 +225,7 @@ def ext_process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers
         when /[A-z]:$/
           if vuln_name.match(/[A-z]/)
             if !line.match(/CVSS/)
-              if line.match(/^[A-z]/) and line.split(/ /).count < 3 and !line.match(/^[A-z][A-z]:$|^[A-z]:$|^Windows|^[0-9]/)
+              if line.match(/^[A-z]/) and line.split(/ /).count < 3 and !line.match(/[a-f,A-F,0-9][a-f,A-F,0-9]:$|^[A-z]:$|^Windows|^[0-9]|Modulus|default:$|Link:|Login Name:/)
                 if vuln_name.match(/[A-z]/)
                   vuln_array[vuln_name][info_name] = info_data.join("\n")
                 end

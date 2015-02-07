@@ -51,3 +51,5 @@
 # Added initial Summary processing
 # 0.2.6: Sat  7 Feb 2015 18:30:09 AEDT
 # Added support for using pdftotext if pdf-reader gem is not installed
+# 0.2.7: Sat  7 Feb 2015 18:45:02 AEDT
+# Improved header detection
