@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Name:         quart (QUalysguard Analysis Report Tool)
-# Version:      0.2.5
+# Version:      0.2.6
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -15,12 +15,23 @@
 #               
 
 require 'rubygems'
-require 'pdf-reader'
 require 'getopt/long'
 require 'writeexcel'
 
+$pdfgem = 1
 $script = $0
 $text   = []
+
+begin
+  require 'pdf-reader'
+rescue LoadError
+  $pdfgem    = 0
+  $pdftotext = %x[which pdftotext].chomp
+  if !$pdftotext.match(/pdftotext/)
+    puts "Could not find PDF gem or pdftotext"
+    exit
+  end
+end
 
 # Print script usage information
 
@@ -81,9 +92,227 @@ class TextReceiver
   end
 end
 
-# Process PDF file
+# Process PDF using pdftotext
 
-def process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
+def ext_process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
+  host_name  = ""
+  counter    = 0
+  lines      = []
+  pages      = []
+  host_list  = []
+  info_name  = ""
+  info_data  = []
+  vuln_name  = ""
+  vuln_headers.push("Vulnerability")
+  vuln_headers.push("Hosts")
+  vuln_headers.push("Port")
+  vuln_headers.push("CVSS")
+  vuln_headers.push("First Detected")
+  vuln_headers.push("Last Detected")
+  vuln_headers.push("Times Detected")
+  vuln_headers.push("QID")
+  vuln_headers.push("CVSS Base")
+  vuln_headers.push("CVSS Temporal")
+  summary_headers.push("Created")
+  summary_title = []
+  summary_name  = ""
+  summary_data  = []
+  raw_txt_file  = "/tmp/raw.txt"
+  %x[#{$pdftotext} -raw \"#{input_file}\" #{raw_txt_file}]
+  if !File.exist?(raw_txt_file)
+    puts "Failed to produce raw text file from PDF file: "+input_file
+  end
+  if output_file.match(/[A-z]|[0-9]/) and dump_data == 1
+    file = File.open(output_file,"w")
+  end
+  lines  = File.readlines(raw_txt_file)
+  length = lines.length
+  lines.each_with_index do |line, index|
+    line = line.chomp
+    if dump_data == 1
+      if !line.match(/^Linux Vuln Scan Results page [0-9]/)
+        if output_file.match(/[A-z]|[0-9]/)
+          line = line+"\n"
+          file.write(line)
+        else
+          puts line
+        end
+      end
+    else
+      if !line.match(/Linux Vuln Scan Results page [0-9]/) and line.match(/[A-z]|[0-9]/)
+        line = line.chomp
+        case line
+        when /\)$/
+          if line.match(/^[0-9] /)
+            if vuln_name.match(/[A-z]/)
+              vuln_array[vuln_name]["Hosts"]   = host_list.join("\n")
+              host_list = []
+              vuln_array[vuln_name][info_name] = info_data.join("\n")
+              info_data = []
+            end
+            vuln_name = line.split(/\(/)[0].gsub(/\s+$/,"").gsub(/^[0-9] /,"")
+          else
+            if vuln_name.match(/[A-z]/)
+              if mask_data == 1
+                case info_name
+                when /Asset Group/
+                  line = "Masked"
+                end
+                case line
+                when /:[0-9,a-f][0-9,a-f]:[0-9,a-f][0-9,a-f]:/
+                  info_data.push(line.gsub(/[0-9,a-f]/,"x"))
+                else
+                  info_data.push(line)
+                end
+              else
+                info_data.push(line)
+              end
+            else
+              if summary_mode == 1
+                if summary_title.match(/[A-z]/)
+                  if line.match(/Created/)
+                    summary_array[summary_title]["Created"] = line.split(/:/)[1..-1].join(":")
+                  else
+                    summary_data.push(line)
+                  end
+                end
+              end
+            end
+          end
+        when /\-\)/
+          if vuln_name.match(/[A-z]/)
+            line_data = line.split(/\s+/)
+            host_name = line_data[1].gsub(/\(|,/,"")
+            if mask_data == 1
+              host_name = host_name.gsub(/[a-z]/,[*('a'..'z')].sample)
+            end
+            host_list.push(host_name)
+            if line.match(/port/)
+              vuln_array[vuln_name]["Port"] = line_data[-4]
+            end
+            vuln_array[vuln_name]["CVSS"] = line_data[-2]
+            vuln_array[vuln_name]["Status"] = line_data[-1]
+          end
+        when /^QID/
+          if vuln_name.match(/[A-z]/)
+            line_data = line.split(/\s+/)
+            vuln_array[vuln_name]["QID"] = line_data[1]
+            if line.match(/CVSS/)
+              vuln_array[vuln_name]["CVSS Base"] = line_data[4..-1].join(" ")
+            end
+          end
+        when /^Category/
+          if vuln_name.match(/[A-z]/)
+            line_data = line.split(/\s+/)
+            if line.match(/CVSS/)
+              vuln_array[vuln_name]["Category"] = line.split(/CVSS/)[0].split(/Category: /)[1]
+              vuln_array[vuln_name]["CVSS Temporal"] = line_data[-1]
+            else
+              vuln_array[vuln_name]["Category"] = line_data[1..-1].join(" ")
+            end
+          end
+        when /^\-/
+          if vuln_name.match(/[A-z]/)
+            vuln_array[vuln_name]["OS"] = line.split(/ - /)[1]
+          end
+        when /Detected:/
+          if vuln_name.match(/[A-z]/)
+            line_data = line.split(/\s+/)
+            vuln_array[vuln_name]["Times Detected"] = line_data[-1]
+            vuln_array[vuln_name]["First Detected"] = line_data[2..5].join(" ")
+            vuln_array[vuln_name]["Last Detected"]  = line_data[8..11].join(" ")
+          end
+        when /[A-z]:$/
+          if vuln_name.match(/[A-z]/)
+            if !line.match(/CVSS/)
+              if line.match(/^[A-z]/) and line.split(/ /).count < 3 and !line.match(/^[A-z][A-z]:$|^[A-z]:$|^Windows|^[0-9]/)
+                if vuln_name.match(/[A-z]/)
+                  vuln_array[vuln_name][info_name] = info_data.join("\n")
+                end
+                info_data = []
+                info_name = line.split(/:/)[0]
+                if info_name.match(/[A-z]/)
+                  vuln_headers.push(info_name)
+                end
+              else
+                if mask_data == 1
+                  case line
+                  when /:[0-9,a-f][0-9,a-f]:[0-9,a-f][0-9,a-f]:/
+                    info_data.push(line.gsub(/[0-9,a-f]/,"x"))
+                  else
+                    info_data.push(line)
+                  end
+                else
+                  info_data.push(line)
+                end
+              end
+            end
+          else
+            if summary_mode == 1
+              if !line.match(/GMT/)
+                if summary_title.match(/[A-z]/)
+                  summary_array[summary_title][summary_name] = summary_data.join("\n")
+                  summary_data = []
+                  summary_name = line.split(/:/)[0]
+                  summary_headers.push(summary_name)
+                end
+              else
+                summary_data.push(line)
+              end
+            end
+          end
+        else
+          if vuln_name.match(/[A-z]/)
+            if mask_data == 1
+              case info_name
+              when /Asset Group/
+                line = "Masked"
+              end
+              case line
+              when /:[0-9,a-f][0-9,a-f]:[0-9,a-f][0-9,a-f]:/
+                info_data.push(line.gsub(/[0-9,a-f]/,"x"))
+              else
+                info_data.push(line)
+              end
+            else
+              info_data.push(line)
+            end
+          else
+            if summary_mode == 1
+              if line.match(/Report Summary|Summary of Vulnerabilities/)
+                summary_title = line
+              else
+                if line.match(/[A-z]:/)
+                  summary_headers.push(summary_name)
+                  summary_array[summary_title][summary_name] = summary_data.join("\n")
+                  summary_data = []
+                  line_data    = line.split(/:\s+/)
+                  summary_name = line_data[0]
+                  line_data    = line_data[1..-1].join(":")
+                  summary_data.push(line_data)
+                else
+                  summary_data.push(line)
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  vuln_array[vuln_name]["Hosts"]   = host_list.join("\n")
+  vuln_array[vuln_name][info_name] = info_data.join("\n")
+  vuln_headers    = vuln_headers.uniq
+  summary_headers = summary_headers.uniq
+  if output_file.match(/[A-z]|[0-9]/) and dump_data == 1
+    file.close
+  end
+  return vuln_array,vuln_headers,summary_array,summary_headers
+end
+
+# Process PDF file using pdf gem
+
+def int_process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
   receiver   = TextReceiver.new
   reader     = PDF::Reader.new(input_file)
   host_name  = ""
@@ -216,10 +445,14 @@ def process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,sum
                   summary_array[summary_title][summary_name] = summary_data.join("\n")
                   summary_data = []
                   summary_name = line.split(/:/)[0]
-                  summary_headers.push(summary_name)
+                  if summary_name.match(/[A-z]/)
+                    summary_headers.push(summary_name)
+                  end
                 end
               else
-                summary_data.push(line)
+                if summary_name.match(/[A-z]/)
+                  summary_data.push(line)
+                end
               end
             end
           end
@@ -264,7 +497,7 @@ def process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,sum
   if output_file.match(/[A-z]|[0-9]/) and dump_data == 1
     file.close
   end
-  return vuln_array,vuln_headers,summary_headers
+  return vuln_array,vuln_headers,summary_array,summary_headers
 end
 
 def print_results(vuln_array,summary_array,vuln_headers,summary_headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags,summary_mode)
@@ -272,11 +505,13 @@ def print_results(vuln_array,summary_array,vuln_headers,summary_headers,search_h
     summary_array.each do |summary_title, summary_info|
       puts summary_title+":"
       summary_info.each do |summary_name, value|
-        if value.match("\n")
-          puts summary_name+":"
-          puts value
-        else
-          puts summary_name+": "+value
+        if summary_name.match(/[A-z]/)
+          if value.match("\n")
+            puts summary_name+":"
+            puts value
+          else
+            puts summary_name+": "+value
+          end
         end
       end
     end
@@ -387,11 +622,13 @@ def print_results(vuln_array,summary_array,vuln_headers,summary_headers,search_h
                           if !search_bugtraqid.match(/[A-z]/) or vuln_array[vuln_name]["Bugtraq ID"].match(/#{search_bugtraqid}/)
                             if !search_pci.match(/[A-z]/) or vuln_array[vuln_name]["PCI Vuln"].match(/#{search_pci}/)
                               if !search_tag.match(/[A-z]/) or info_name.match(/#{search_tag}/)
-                                if !info_value.match(/\n/)
-                                  puts info_name+": "+info_value
-                                else
-                                  puts info_name+":"
-                                  puts info_value
+                                if info_value
+                                  if !info_value.match(/\n/)
+                                    puts info_name+": "+info_value
+                                  else
+                                    puts info_name+":"
+                                    puts info_value
+                                  end
                                 end
                               end
                             end
@@ -714,7 +951,11 @@ if option["input"]
   summary_array   = Hash.new{|hash, key| hash[key] = Hash.new}
   vuln_headers    = []
   summary_headers = []
-  (vuln_array,vuln_headers,summary_headers) = process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
+  if $pdfgem == 1
+    (vuln_array,vuln_headers,summary_array,summary_headers) = int_process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
+  else
+    (vuln_array,vuln_headers,summary_array,summary_headers) = ext_process_pdf(input_file,output_file,vuln_array,summary_array,vuln_headers,summary_headers,dump_data,mask_data,summary_mode)
+  end
   if dump_data == 0
     print_results(vuln_array,summary_array,vuln_headers,summary_headers,search_host,search_exploit,search_tag,search_qid,search_cveid,search_bugtraqid,search_cvvs,search_group,search_os,search_status,search_pci,search_string,output_file,output_format,workbook,list_exploits,list_tags,summary_mode)
   end

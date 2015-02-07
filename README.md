@@ -48,9 +48,29 @@ Packages
 Required Ruby Gems:
 
 - rubygems
-- pdf-reader
+- pdf-reader [1]
 - getopt/long
 - writeexcel
+
+[1] If pdf-reader is not installed the script will attempt to use pdftotext from the poppler package.
+
+Required packages without pdf-reader gem:
+
+- XQuartz
+- pdftotext
+
+To install XQuart on OS X, either install it manually from the XQuartz site,
+use brew, or use daeva:
+
+```
+$ daeva -i xquartz
+```
+
+To install pdftotext on OS X:
+
+```
+$ brew install poppler
+```
 
 Usage
 -----

@@ -49,3 +49,5 @@
 # Added option to list tags
 # 0.2.5: Tue  3 Feb 2015 19:31:34 AEDT
 # Added initial Summary processing
+# 0.2.6: Sat  7 Feb 2015 18:30:09 AEDT
+# Added support for using pdftotext if pdf-reader gem is not installed
